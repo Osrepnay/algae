@@ -351,6 +351,7 @@ mod test {
 
     #[test]
     fn test_bestmove() {
+        // self trap
         let mut game = Game::new(7, 7);
         game.add_start_snake(1);
         game.snakes[0].3 = 10;
@@ -360,12 +361,27 @@ mod test {
         game.move_snakes(&vec![2, 0]);
         assert_eq!(best_move(&mut game, 1, i128::MAX).unwrap().1, -10000.0);
 
+        // trap the other snake
         let mut game = Game::new(7, 7);
         game.add_start_snake(9);
+        game.snakes[0].3 = 3;
         game.add_start_snake(0);
+        game.snakes[1].3 = 3;
         game.move_snakes(&vec![1, 1]);
         game.move_snakes(&vec![1, 1]);
         game.move_snakes(&vec![1, 1]);
-        assert_eq!(best_move(&mut game, 2, i128::MAX).unwrap().1, 10000.0);
+        assert_eq!(best_move(&mut game, 2, i128::MAX).unwrap(), (2, 10000.0));
+
+        // avoid losing head-to-head
+        let mut game = Game::new(7, 7);
+        game.add_start_snake(0);
+        game.add_start_snake(6);
+        game.snakes[1].3 = 3;
+        game.move_snakes(&vec![1, 3]);
+        game.move_snakes(&vec![1, 3]);
+        game.move_snakes(&vec![1, 3]);
+        let best_move = best_move(&mut game, 2, i128::MAX).unwrap().0;
+        assert_ne!(best_move, 1);
+        assert_ne!(best_move, 3);
     }
 }

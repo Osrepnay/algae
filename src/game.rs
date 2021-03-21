@@ -161,7 +161,7 @@ impl Game {
     pub fn add_start_snake(&mut self, position: u16) {
         let mut snake_arr = vec![false; self.width as usize * self.height as usize];
         snake_arr[position as usize] = true;
-        self.snakes.push((vec![position], snake_arr, 100, 3));
+        self.snakes.push((vec![position], snake_arr, 100, 2));
     }
 }
 
