@@ -1,9 +1,9 @@
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Game {
-    // Each snake has fields representing the squares each section is on, an array representing
+    // Each snake has fields representing the squares each section is on, an snake_array representing
     // whether the snake has a body part on that square, the health the snake is at, and the
     // number of sections queued for addition.
-    pub snakes: Vec<(Vec<u16>, Vec<bool>, u8, u8)>,
+    pub snakes: Vec<Snake>,
     pub apples: Vec<bool>,
     pub width: u8,
     pub height: u8,
@@ -29,24 +29,24 @@ impl Game {
             let snake = &mut self.snakes[snake_idx];
 
             // store for unmove
-            prev_healths.push(snake.2);
-            tail_pos.push(snake.0[snake.0.len() - 1]);
+            prev_healths.push(snake.health);
+            tail_pos.push(snake.positions[snake.positions.len() - 1]);
             hit_inaccessible.push(false);
-            was_queued.push(snake.3 > 0);
+            was_queued.push(snake.queued > 0);
             eaten_apples.push(false);
 
             // skip if dead
-            if snake.2 == 0 {
+            if snake.health == 0 {
                 continue;
             }
 
             // get new head position
             let direction = directions[snake_idx];
             let new_head_signed = match direction {
-                0 => snake.0[0] as i16 + self.width as i16,
-                1 => snake.0[0] as i16 + 1,
-                2 => snake.0[0] as i16 - self.width as i16,
-                3 => snake.0[0] as i16 - 1,
+                0 => snake.positions[0] as i16 + self.width as i16,
+                1 => snake.positions[0] as i16 + 1,
+                2 => snake.positions[0] as i16 - self.width as i16,
+                3 => snake.positions[0] as i16 - 1,
                 _ => panic!("Invalid direction"),
             };
             let new_head = if new_head_signed < 0
@@ -54,7 +54,7 @@ impl Game {
                 || (new_head_signed % self.width as i16 == 0 && direction == 1)
                 || ((new_head_signed + 1) % self.width as i16 == 0 && direction == 3)
             {
-                snake.2 = 0;
+                snake.health = 0;
                 hit_inaccessible[snake_idx] = true;
                 continue;
             } else {
@@ -62,33 +62,33 @@ impl Game {
             };
 
             // move snake
-            snake.0.insert(0, new_head);
-            if snake.3 == 0 {
-                let last = snake.0.pop().unwrap();
-                if snake.0[1..].iter().any(|pos| *pos == new_head) {
-                    snake.0.push(last);
-                    snake.0.remove(0);
+            snake.positions.insert(0, new_head);
+            if snake.queued == 0 {
+                let last = snake.positions.pop().unwrap();
+                if snake.positions[1..].iter().any(|pos| *pos == new_head) {
+                    snake.positions.push(last);
+                    snake.positions.remove(0);
                     hit_inaccessible[snake_idx] = true;
-                    snake.2 = 0;
+                    snake.health = 0;
                     continue;
                 }
-                snake.1[last as usize] = false;
+                snake.snake_arr[last as usize] = false;
             } else {
-                if snake.0[1..].iter().any(|pos| *pos == new_head) {
-                    snake.0.remove(0);
+                if snake.positions[1..].iter().any(|pos| *pos == new_head) {
+                    snake.positions.remove(0);
                     hit_inaccessible[snake_idx] = true;
-                    snake.2 = 0;
+                    snake.health = 0;
                     continue;
                 }
-                snake.3 -= 1;
+                snake.queued -= 1;
             }
-            snake.1[new_head as usize] = true;
-            snake.2 -= 1;
+            snake.snake_arr[new_head as usize] = true;
+            snake.health -= 1;
 
             // eat apple if available
             if self.apples[new_head as usize] {
-                snake.2 = 100;
-                snake.3 += 1;
+                snake.health = 100;
+                snake.queued += 1;
                 self.apples[new_head as usize] = false;
                 eaten_apples[snake_idx] = true;
             }
@@ -96,27 +96,27 @@ impl Game {
 
         // snake-to-snake collisions
         for snake_idx in 0..self.snakes.len() {
-            if self.snakes[snake_idx].2 == 0 {
+            if self.snakes[snake_idx].health == 0 {
                 continue;
             }
             for collide_snake_idx in 0..self.snakes.len() {
-                if collide_snake_idx == snake_idx || self.snakes[collide_snake_idx].2 == 0 {
+                if collide_snake_idx == snake_idx || self.snakes[collide_snake_idx].health == 0 {
                     continue;
                 }
-                if self.snakes[snake_idx].0[0] == self.snakes[collide_snake_idx].0[0] {
-                    if self.snakes[snake_idx].0.len() == self.snakes[collide_snake_idx].0.len() {
-                        self.snakes[snake_idx].2 = 0;
-                        self.snakes[collide_snake_idx].2 = 0;
-                    } else if self.snakes[snake_idx].0.len()
-                        < self.snakes[collide_snake_idx].0.len()
+                if self.snakes[snake_idx].positions[0] == self.snakes[collide_snake_idx].positions[0] {
+                    if self.snakes[snake_idx].positions.len() == self.snakes[collide_snake_idx].positions.len() {
+                        self.snakes[snake_idx].health = 0;
+                        self.snakes[collide_snake_idx].health = 0;
+                    } else if self.snakes[snake_idx].positions.len()
+                        < self.snakes[collide_snake_idx].positions.len()
                     {
-                        self.snakes[snake_idx].2 = 0;
+                        self.snakes[snake_idx].health = 0;
                     }
-                } else if self.snakes[collide_snake_idx].0[1..]
+                } else if self.snakes[collide_snake_idx].positions[1..]
                     .iter()
-                    .any(|pos| *pos == self.snakes[snake_idx].0[0])
+                    .any(|pos| *pos == self.snakes[snake_idx].positions[0])
                 {
-                    self.snakes[snake_idx].2 = 0;
+                    self.snakes[snake_idx].health = 0;
                 }
             }
         }
@@ -135,37 +135,55 @@ impl Game {
             if prev_state.prev_healths[snake_idx] == 0 {
                 continue;
             }
-            snake.2 = prev_state.prev_healths[snake_idx];
+            snake.health = prev_state.prev_healths[snake_idx];
             if prev_state.hit_inaccessible[snake_idx] {
                 continue;
             }
-            snake.1[snake.0[0] as usize] = false;
-            snake.1[prev_state.tail_pos[snake_idx] as usize] = true;
-            snake.0.remove(0);
+            snake.snake_arr[snake.positions[0] as usize] = false;
+            snake.snake_arr[prev_state.tail_pos[snake_idx] as usize] = true;
+            snake.positions.remove(0);
             if !prev_state.was_queued[snake_idx] {
-                snake.0.push(prev_state.tail_pos[snake_idx]);
+                snake.positions.push(prev_state.tail_pos[snake_idx]);
             }
             if prev_state.eaten_apples[snake_idx] {
-                snake.2 -= 1;
+                snake.health -= 1;
             }
             if prev_state.was_queued[snake_idx] {
-                snake.3 += 1;
+                snake.queued += 1;
             }
         }
     }
 
     pub fn add_snake(&mut self, positions: Vec<u16>, snake_arr: Vec<bool>, health: u8, queued: u8) {
-        self.snakes.push((positions, snake_arr, health, queued));
+        self.snakes.push(Snake {
+            positions,
+            snake_arr,
+            health,
+            queued
+        });
     }
 
     pub fn add_start_snake(&mut self, position: u16) {
         let mut snake_arr = vec![false; self.width as usize * self.height as usize];
         snake_arr[position as usize] = true;
-        self.snakes.push((vec![position], snake_arr, 100, 2));
+        self.snakes.push(Snake {
+            positions: vec![position],
+            snake_arr,
+            health :100,
+            queued: 2
+        });
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Snake {
+    pub positions: Vec<u16>,
+    pub snake_arr: Vec<bool>,
+    pub health: u8,
+    pub queued: u8,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ChangedState {
     prev_healths: Vec<u8>,
     tail_pos: Vec<u16>,
@@ -213,7 +231,7 @@ mod test {
         // self collisions
         let mut game = Game::new(7, 7);
         game.add_start_snake(1);
-        game.snakes[0].3 = 10;
+        game.snakes[0].queued = 10;
         game.add_start_snake(6);
         game.move_snakes(&vec![0, 0]);
         game.move_snakes(&vec![3, 0]);

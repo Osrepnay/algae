@@ -8,14 +8,14 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
     }
     let mut best_move = (0, f64::NEG_INFINITY);
     for direction in 0..4 {
-        if game.snakes[0].0.len() == 1 && direction == 2 {
+        if game.snakes[0].positions.len() == 1 && direction == 2 {
             continue;
         }
         let new_head_signed = match direction {
-            0 => game.snakes[0].0[0] as i16 + game.width as i16,
-            1 => game.snakes[0].0[0] as i16 + 1,
-            2 => game.snakes[0].0[0] as i16 - game.width as i16,
-            3 => game.snakes[0].0[0] as i16 - 1,
+            0 => game.snakes[0].positions[0] as i16 + game.width as i16,
+            1 => game.snakes[0].positions[0] as i16 + 1,
+            2 => game.snakes[0].positions[0] as i16 - game.width as i16,
+            3 => game.snakes[0].positions[0] as i16 - 1,
             _ => panic!("Invalid direction"),
         };
         if new_head_signed < 0
@@ -25,7 +25,7 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         {
             continue;
         }
-        if game.snakes[0].0[1..game.snakes[0].0.len() - 1]
+        if game.snakes[0].positions[1..game.snakes[0].positions.len() - 1]
             .iter()
             .any(|pos| *pos == new_head_signed as u16)
         {
@@ -58,21 +58,21 @@ pub fn max(
     if search_time < 0 {
         return None;
     }
-    if game.snakes[0].2 == 0 {
+    if game.snakes[0].health == 0 {
         return Some(-10000.0);
     }
     if depth <= 0 {
         return Some(eval(game));
     }
     for direction in 0..4 {
-        if game.snakes[0].0.len() == 1 && direction == 2 {
+        if game.snakes[0].positions.len() == 1 && direction == 2 {
             continue;
         }
         let new_head_signed = match direction {
-            0 => game.snakes[0].0[0] as i16 + game.width as i16,
-            1 => game.snakes[0].0[0] as i16 + 1,
-            2 => game.snakes[0].0[0] as i16 - game.width as i16,
-            3 => game.snakes[0].0[0] as i16 - 1,
+            0 => game.snakes[0].positions[0] as i16 + game.width as i16,
+            1 => game.snakes[0].positions[0] as i16 + 1,
+            2 => game.snakes[0].positions[0] as i16 - game.width as i16,
+            3 => game.snakes[0].positions[0] as i16 - 1,
             _ => panic!("Invalid direction"),
         };
         if new_head_signed < 0
@@ -82,7 +82,7 @@ pub fn max(
         {
             continue;
         }
-        if game.snakes[0].0[1..game.snakes[0].0.len() - 1]
+        if game.snakes[0].positions[1..game.snakes[0].positions.len() - 1]
             .iter()
             .any(|pos| *pos == new_head_signed as u16)
         {
@@ -118,13 +118,13 @@ pub fn min(
     if search_time < 0 {
         return None;
     }
-    if !game.snakes[1..].iter().any(|snake| snake.2 > 0) {
+    if !game.snakes[1..].iter().any(|snake| snake.health > 0) {
         return Some(10000.0);
     }
     if depth <= 0 {
         return Some(eval(game));
     }
-    if game.snakes[1].2 <= 0 {
+    if game.snakes[1].health <= 0 {
         let score = min_rec(
             game,
             &mut vec![own_snake_move, 0],
@@ -142,14 +142,14 @@ pub fn min(
         return Some(beta);
     }
     for direction in 0..4 {
-        if game.snakes[1].0.len() == 1 && direction == 2 {
+        if game.snakes[1].positions.len() == 1 && direction == 2 {
             continue;
         }
         let new_head_signed = match direction {
-            0 => game.snakes[1].0[0] as i16 + game.width as i16,
-            1 => game.snakes[1].0[0] as i16 + 1,
-            2 => game.snakes[1].0[0] as i16 - game.width as i16,
-            3 => game.snakes[1].0[0] as i16 - 1,
+            0 => game.snakes[1].positions[0] as i16 + game.width as i16,
+            1 => game.snakes[1].positions[0] as i16 + 1,
+            2 => game.snakes[1].positions[0] as i16 - game.width as i16,
+            3 => game.snakes[1].positions[0] as i16 - 1,
             _ => panic!("Invalid direction"),
         };
         if new_head_signed < 0
@@ -159,7 +159,7 @@ pub fn min(
         {
             continue;
         }
-        if game.snakes[1].0[1..game.snakes[1].0.len() - 1]
+        if game.snakes[1].positions[1..game.snakes[1].positions.len() - 1]
             .iter()
             .any(|pos| *pos == new_head_signed as u16)
         {
@@ -212,7 +212,7 @@ fn min_rec(
             beta = score;
         }
     } else {
-        if game.snakes[other_snake_moves.len()].2 == 0 {
+        if game.snakes[other_snake_moves.len()].health == 0 {
             other_snake_moves.push(0);
             let score = min_rec(
                 game,
@@ -232,14 +232,14 @@ fn min_rec(
             return Some(beta);
         }
         for direction in 0..4 {
-            if game.snakes[other_snake_moves.len()].0.len() == 1 && direction == 2 {
+            if game.snakes[other_snake_moves.len()].positions.len() == 1 && direction == 2 {
                 continue;
             }
             let new_head_signed = match direction {
-                0 => game.snakes[other_snake_moves.len()].0[0] as i16 + game.width as i16,
-                1 => game.snakes[other_snake_moves.len()].0[0] as i16 + 1,
-                2 => game.snakes[other_snake_moves.len()].0[0] as i16 - game.width as i16,
-                3 => game.snakes[other_snake_moves.len()].0[0] as i16 - 1,
+                0 => game.snakes[other_snake_moves.len()].positions[0] as i16 + game.width as i16,
+                1 => game.snakes[other_snake_moves.len()].positions[0] as i16 + 1,
+                2 => game.snakes[other_snake_moves.len()].positions[0] as i16 - game.width as i16,
+                3 => game.snakes[other_snake_moves.len()].positions[0] as i16 - 1,
                 _ => panic!("Invalid direction"),
             };
             if new_head_signed < 0
@@ -249,8 +249,8 @@ fn min_rec(
             {
                 continue;
             }
-            if game.snakes[other_snake_moves.len()].0
-                [1..game.snakes[other_snake_moves.len()].0.len() - 1]
+            if game.snakes[other_snake_moves.len()].positions
+                [1..game.snakes[other_snake_moves.len()].positions.len() - 1]
                 .iter()
                 .any(|pos| *pos == new_head_signed as u16)
             {
@@ -312,8 +312,8 @@ pub fn eval(game: &Game) -> f64 {
         total_size
     }
 
-    let self_dead = game.snakes[0].2 == 0;
-    let others_dead = !game.snakes[1..].iter().any(|snake| snake.2 > 0);
+    let self_dead = game.snakes[0].health == 0;
+    let others_dead = !game.snakes[1..].iter().any(|snake| snake.health > 0);
     if self_dead && others_dead {
         return 0.0;
     } else if self_dead {
@@ -323,23 +323,23 @@ pub fn eval(game: &Game) -> f64 {
     }
     let mut all_blockers = Vec::new();
     for square in 0..game.width as u16 * game.height as u16 {
-        all_blockers.push(game.snakes.iter().any(|snake| snake.1[square as usize]));
+        all_blockers.push(game.snakes.iter().any(|snake| snake.snake_arr[square as usize]));
     }
-    let own_score = game.snakes[0].0.len() as f64
-        + game.snakes[0].3 as f64
-        + cast_rays(game.snakes[0].0[0], &all_blockers, game.width, game.height) as f64
+    let own_score = game.snakes[0].positions.len() as f64
+        + game.snakes[0].queued as f64
+        + cast_rays(game.snakes[0].positions[0], &all_blockers, game.width, game.height) as f64
             / (game.width as f64 + game.height as f64)
-        + (game.snakes[0].2 as f64 - 50.0) / 5.0;
+        + (game.snakes[0].health as f64 - 50.0) / 5.0;
     let mut other_score = 0.0;
     for other_snake in &game.snakes[1..] {
-        if other_snake.2 == 0 {
+        if other_snake.health == 0 {
             continue;
         }
-        other_score += other_snake.0.len() as f64
-            + other_snake.3 as f64
-            + cast_rays(other_snake.0[0], &all_blockers, game.width, game.height) as f64
+        other_score += other_snake.positions.len() as f64
+            + other_snake.queued as f64
+            + cast_rays(other_snake.positions[0], &all_blockers, game.width, game.height) as f64
                 / (game.width as f64 + game.height as f64)
-            + (other_snake.2 as f64 - 50.0) / 5.0;
+            + (other_snake.health as f64 - 50.0) / 5.0;
     }
     own_score - other_score / (game.snakes.len() - 1) as f64
 }
@@ -354,7 +354,7 @@ mod test {
         // self trap
         let mut game = Game::new(7, 7);
         game.add_start_snake(1);
-        game.snakes[0].3 = 10;
+        game.snakes[0].queued = 10;
         game.add_start_snake(6);
         game.move_snakes(&vec![0, 0]);
         game.move_snakes(&vec![3, 0]);
@@ -364,9 +364,9 @@ mod test {
         // trap the other snake
         let mut game = Game::new(7, 7);
         game.add_start_snake(9);
-        game.snakes[0].3 = 3;
+        game.snakes[0].queued = 3;
         game.add_start_snake(0);
-        game.snakes[1].3 = 3;
+        game.snakes[1].queued = 3;
         game.move_snakes(&vec![1, 1]);
         game.move_snakes(&vec![1, 1]);
         game.move_snakes(&vec![1, 1]);
@@ -376,7 +376,7 @@ mod test {
         let mut game = Game::new(7, 7);
         game.add_start_snake(0);
         game.add_start_snake(6);
-        game.snakes[1].3 = 3;
+        game.snakes[1].queued = 3;
         game.move_snakes(&vec![1, 3]);
         game.move_snakes(&vec![1, 3]);
         game.move_snakes(&vec![1, 3]);
