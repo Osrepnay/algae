@@ -328,7 +328,7 @@ pub fn eval(game: &Game) -> f64 {
     let own_score = game.snakes[0].positions.len() as f64
         + game.snakes[0].queued as f64
         + cast_rays(game.snakes[0].positions[0], &all_blockers, game.width, game.height) as f64
-            / (game.width as f64 + game.height as f64)
+            / (game.width as f64 + game.height as f64) * 5.0
         + (game.snakes[0].health as f64 - 50.0) / 5.0;
     let mut other_score = 0.0;
     for other_snake in &game.snakes[1..] {
@@ -338,7 +338,7 @@ pub fn eval(game: &Game) -> f64 {
         other_score += other_snake.positions.len() as f64
             + other_snake.queued as f64
             + cast_rays(other_snake.positions[0], &all_blockers, game.width, game.height) as f64
-                / (game.width as f64 + game.height as f64)
+                / (game.width as f64 + game.height as f64) * 5.0
             + (other_snake.health as f64 - 50.0) / 5.0;
     }
     own_score - other_score / (game.snakes.len() - 1) as f64
