@@ -103,8 +103,12 @@ impl Game {
                 if collide_snake_idx == snake_idx || self.snakes[collide_snake_idx].health == 0 {
                     continue;
                 }
-                if self.snakes[snake_idx].positions[0] == self.snakes[collide_snake_idx].positions[0] {
-                    if self.snakes[snake_idx].positions.len() == self.snakes[collide_snake_idx].positions.len() {
+                if self.snakes[snake_idx].positions[0]
+                    == self.snakes[collide_snake_idx].positions[0]
+                {
+                    if self.snakes[snake_idx].positions.len()
+                        == self.snakes[collide_snake_idx].positions.len()
+                    {
                         self.snakes[snake_idx].health = 0;
                         self.snakes[collide_snake_idx].health = 0;
                     } else if self.snakes[snake_idx].positions.len()
@@ -141,15 +145,16 @@ impl Game {
             }
             snake.snake_arr[snake.positions[0] as usize] = false;
             snake.snake_arr[prev_state.tail_pos[snake_idx] as usize] = true;
+            let head = snake.positions[0];
             snake.positions.remove(0);
             if !prev_state.was_queued[snake_idx] {
                 snake.positions.push(prev_state.tail_pos[snake_idx]);
+            } else {
+                snake.queued += 1;
             }
             if prev_state.eaten_apples[snake_idx] {
-                snake.health -= 1;
-            }
-            if prev_state.was_queued[snake_idx] {
-                snake.queued += 1;
+                self.apples[head as usize] = true;
+                snake.queued -= 1;
             }
         }
     }
@@ -159,7 +164,7 @@ impl Game {
             positions,
             snake_arr,
             health,
-            queued
+            queued,
         });
     }
 
@@ -169,8 +174,8 @@ impl Game {
         self.snakes.push(Snake {
             positions: vec![position],
             snake_arr,
-            health :100,
-            queued: 2
+            health: 100,
+            queued: 2,
         });
     }
 }
@@ -245,6 +250,18 @@ mod test {
         game.add_start_snake(6);
         let game_clone = game.clone();
         let prev_state = game.move_snakes(&vec![2, 0]);
+        game.unmove_snake(&prev_state);
+        assert_eq!(game, game_clone);
+
+        // eating apple
+        let mut game = Game::new(7, 7);
+        game.add_start_snake(0);
+        game.add_start_snake(6);
+        let mut apples = vec![false; 121];
+        apples[1] = true;
+        game.apples = apples;
+        let game_clone = game.clone();
+        let prev_state = game.move_snakes(&vec![1, 0]);
         game.unmove_snake(&prev_state);
         assert_eq!(game, game_clone);
     }
