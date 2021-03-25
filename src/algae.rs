@@ -25,9 +25,10 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         {
             continue;
         }
-        if game.snakes[0].positions[1..game.snakes[0].positions.len() - 1]
-            .iter()
-            .any(|pos| *pos == new_head_signed as u16)
+        if game.snakes[0].positions.len() > 1
+            && game.snakes[0].positions[1..game.snakes[0].positions.len() - 1]
+                .iter()
+                .any(|pos| *pos == new_head_signed as u16)
         {
             continue;
         }
@@ -82,9 +83,10 @@ pub fn max(
         {
             continue;
         }
-        if game.snakes[0].positions[1..game.snakes[0].positions.len() - 1]
-            .iter()
-            .any(|pos| *pos == new_head_signed as u16)
+        if game.snakes[0].positions.len() > 1
+            && game.snakes[0].positions[1..game.snakes[0].positions.len() - 1]
+                .iter()
+                .any(|pos| *pos == new_head_signed as u16)
         {
             continue;
         }
@@ -159,9 +161,10 @@ pub fn min(
         {
             continue;
         }
-        if game.snakes[1].positions[1..game.snakes[1].positions.len() - 1]
-            .iter()
-            .any(|pos| *pos == new_head_signed as u16)
+        if game.snakes[1].positions.len() > 1
+            && game.snakes[1].positions[1..game.snakes[1].positions.len() - 1]
+                .iter()
+                .any(|pos| *pos == new_head_signed as u16)
         {
             continue;
         }
@@ -249,10 +252,11 @@ fn min_rec(
             {
                 continue;
             }
-            if game.snakes[other_snake_moves.len()].positions
-                [1..game.snakes[other_snake_moves.len()].positions.len() - 1]
-                .iter()
-                .any(|pos| *pos == new_head_signed as u16)
+            if game.snakes[other_snake_moves.len()].positions.len() > 1
+                && game.snakes[other_snake_moves.len()].positions
+                    [1..game.snakes[other_snake_moves.len()].positions.len() - 1]
+                    .iter()
+                    .any(|pos| *pos == new_head_signed as u16)
             {
                 continue;
             }
