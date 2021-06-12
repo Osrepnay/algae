@@ -4,7 +4,9 @@ pub struct Game {
     // whether the snake has a body part on that square, the health the snake is at, and the
     // number of sections queued for addition.
     pub snakes: Vec<Snake>,
+    // TODO check perf for hashset type storage
     pub apples: Vec<bool>,
+    pub hazards: Vec<bool>,
     pub width: u8,
     pub height: u8,
 }
@@ -14,6 +16,7 @@ impl Game {
         Game {
             snakes: Vec::new(),
             apples: vec![false; width as usize * height as usize],
+            hazards: vec![false; width as usize * height as usize],
             width,
             height,
         }
@@ -91,6 +94,16 @@ impl Game {
                 snake.queued += 1;
                 self.apples[new_head as usize] = false;
                 eaten_apples[snake_idx] = true;
+            }
+
+            // subtract health if head in hazard sauce
+            if self.hazards[new_head as usize] {
+                if snake.health > 15 {
+                    snake.health -= 15;
+                } else {
+                    snake.health = 0;
+                    continue;
+                }
             }
         }
 
@@ -257,9 +270,22 @@ mod test {
         let mut game = Game::new(7, 7);
         game.add_start_snake(0);
         game.add_start_snake(6);
-        let mut apples = vec![false; 121];
+        let mut apples = vec![false; 49];
         apples[1] = true;
         game.apples = apples;
+        let game_clone = game.clone();
+        let prev_state = game.move_snakes(&vec![1, 0]);
+        game.unmove_snake(&prev_state);
+        assert_eq!(game, game_clone);
+
+        // hazard sauce
+        let mut game = Game::new(7, 7);
+        game.add_start_snake(0);
+        game.add_start_snake(6);
+        let mut hazards = vec![false; 49];
+        // unrealistic hazard but w/e, shouldn't affect
+        hazards[1] = true;
+        game.hazards = hazards;
         let game_clone = game.clone();
         let prev_state = game.move_snakes(&vec![1, 0]);
         game.unmove_snake(&prev_state);

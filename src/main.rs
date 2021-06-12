@@ -4,7 +4,6 @@ pub mod game;
 use game::Game;
 use serde::Deserialize;
 use serde_json::json;
-use std::collections::HashMap;
 use std::time::Instant;
 use warp::http::StatusCode;
 use warp::Filter;
@@ -35,17 +34,22 @@ async fn main() {
             println!("request: {:?}", sent_move);
             let mut game = Game::new(sent_move.board.width, sent_move.board.height);
             for apple in sent_move.board.food {
-                let x = apple.get("x").unwrap();
-                let y = apple.get("y").unwrap();
+                let x = apple.x;
+                let y = apple.y;
                 game.apples[(y * sent_move.board.width as u16 + x) as usize] = true;
+            }
+            for hazard in sent_move.board.hazards {
+                let x = hazard.x;
+                let y = hazard.y;
+                game.hazards[(y * sent_move.board.width as u16 + x) as usize] = true;
             }
             let mut my_positions: Vec<u16> = Vec::new();
             let mut my_snake_arr =
                 vec![false; sent_move.board.width as usize * sent_move.board.height as usize];
             let mut my_queued = 0;
             for pos_idx in 0..sent_move.you.body.len() {
-                let x = sent_move.you.body[pos_idx].get("x").unwrap();
-                let y = sent_move.you.body[pos_idx].get("y").unwrap();
+                let x = sent_move.you.body[pos_idx].x;
+                let y = sent_move.you.body[pos_idx].y;
                 let pos = y * sent_move.board.width as u16 + x;
                 if my_positions.len() > 0 && my_positions[my_positions.len() - 1] == pos {
                     my_queued += 1;
@@ -64,8 +68,8 @@ async fn main() {
                     vec![false; sent_move.board.width as usize * sent_move.board.height as usize];
                 let mut queued = 0;
                 for pos_idx in 0..snake.body.len() {
-                    let x = snake.body[pos_idx].get("x").unwrap();
-                    let y = snake.body[pos_idx].get("y").unwrap();
+                    let x = snake.body[pos_idx].x;
+                    let y = snake.body[pos_idx].y;
                     let pos = y * sent_move.board.width as u16 + x;
                     if positions.len() > 0 && positions[positions.len() - 1] == pos {
                         queued += 1;
@@ -130,8 +134,8 @@ struct SentGame {
 struct Board {
     height: u8,
     width: u8,
-    food: Vec<HashMap<String, u16>>,
-    hazards: Vec<HashMap<String, u16>>,
+    food: Vec<Coord>,
+    hazards: Vec<Coord>,
     snakes: Vec<Battlesnake>,
 }
 
@@ -140,9 +144,15 @@ struct Battlesnake {
     id: String,
     name: String,
     health: u8,
-    body: Vec<HashMap<String, u16>>,
+    body: Vec<Coord>,
     latency: String,
-    head: HashMap<String, u16>,
+    head: Coord,
     length: u16,
     shout: String,
+}
+
+#[derive(Debug, Deserialize, Eq, PartialEq)]
+pub struct Coord {
+    x: u16,
+    y: u16,
 }
