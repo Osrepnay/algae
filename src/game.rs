@@ -232,7 +232,6 @@ mod test {
         game.add_start_snake(2);
         let game_clone = game.clone();
         let prev_state = game.move_snakes(&vec![1, 3]);
-        println!("{:?}", game);
         game.unmove_snake(&prev_state);
         assert_eq!(game, game_clone);
 

@@ -1,4 +1,6 @@
 use crate::game::Game;
+use std::sync::mpsc;
+use std::thread;
 use std::time::Instant;
 
 pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f64)> {
@@ -7,6 +9,8 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         return None;
     }
     let mut best_move = (0, f64::NEG_INFINITY);
+
+    let mut moves = Vec::new();
     for direction in 0..4 {
         if game.snakes[0].positions.len() == 1 && direction == 2 {
             continue;
@@ -32,19 +36,37 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         {
             continue;
         }
-        let score = min(
-            game,
-            direction,
-            best_move.1,
-            f64::INFINITY,
-            depth,
-            search_time - start.elapsed().as_millis() as i128,
-        )?;
-        if score > best_move.1 {
-            best_move.0 = direction;
-            best_move.1 = score;
+        moves.push(direction);
+    }
+    let num_moves = moves.len();
+
+    let (tx, rx) = mpsc::channel();
+    for direction in moves {
+        let mut game = game.clone();
+        let tx = tx.clone();
+        thread::spawn(move || {
+            tx.send(min(
+                &mut game,
+                direction,
+                best_move.1,
+                f64::INFINITY,
+                depth,
+                search_time - start.elapsed().as_millis() as i128,
+            ).map(|x| (direction, x))).expect("Failed to send result of search");
+        });
+    }
+    for _ in 0..num_moves {
+        let potential_best_move = rx.recv().expect("Failed to read from thread receiver.");
+        match potential_best_move {
+            Some(potential_best_move) => {
+                if potential_best_move.1 > best_move.1 {
+                    best_move = potential_best_move;
+                }
+            },
+            None => return None,
         }
     }
+
     Some(best_move)
 }
 
