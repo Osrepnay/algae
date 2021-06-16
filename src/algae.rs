@@ -45,14 +45,15 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         let mut game = game.clone();
         let tx = tx.clone();
         thread::spawn(move || {
-            tx.send(min(
+            // maybe switch to futures if it's not much slower
+            let _ = tx.send(min(
                 &mut game,
                 direction,
                 best_move.1,
                 f64::INFINITY,
                 depth,
                 search_time - start.elapsed().as_millis() as i128,
-            ).map(|x| (direction, x))).expect("Failed to send result of search");
+            ).map(|x| (direction, x)));
         });
     }
     for _ in 0..num_moves {
