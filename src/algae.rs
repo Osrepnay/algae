@@ -276,9 +276,9 @@ fn min_rec(
                 continue;
             }
             if game.snakes[other_snake_moves.len()].positions.len() > 1
-                && game.snakes[other_snake_moves.len()].positions[1..game.snakes[other_snake_moves.len()].positions.len() - 1]
-                    .iter()
-                    .any(|pos| *pos == new_head_signed as u16)
+                && (new_head_signed
+                    != game.snakes[other_snake_moves.len()].positions[game.snakes[other_snake_moves.len()].positions.len() - 1] as i16
+                    && game.snakes[other_snake_moves.len()].snake_arr[new_head_signed as usize])
             {
                 continue;
             }
