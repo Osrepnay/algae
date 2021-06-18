@@ -46,14 +46,17 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         let tx = tx.clone();
         thread::spawn(move || {
             // maybe switch to futures if it's not much slower
-            let _ = tx.send(min(
-                &mut game,
-                direction,
-                best_move.1,
-                f64::INFINITY,
-                depth,
-                search_time - start.elapsed().as_millis() as i128,
-            ).map(|x| (direction, x)));
+            let _ = tx.send(
+                min(
+                    &mut game,
+                    direction,
+                    best_move.1,
+                    f64::INFINITY,
+                    depth,
+                    search_time - start.elapsed().as_millis() as i128,
+                )
+                .map(|x| (direction, x)),
+            );
         });
     }
     for _ in 0..num_moves {
@@ -63,7 +66,7 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
                 if potential_best_move.1 > best_move.1 {
                     best_move = potential_best_move;
                 }
-            },
+            }
             None => return None,
         }
     }
@@ -277,7 +280,9 @@ fn min_rec(
             }
             if game.snakes[other_snake_moves.len()].positions.len() > 1
                 && (new_head_signed
-                    != game.snakes[other_snake_moves.len()].positions[game.snakes[other_snake_moves.len()].positions.len() - 1] as i16
+                    != game.snakes[other_snake_moves.len()].positions
+                        [game.snakes[other_snake_moves.len()].positions.len() - 1]
+                        as i16
                     && game.snakes[other_snake_moves.len()].snake_arr[new_head_signed as usize])
             {
                 continue;
