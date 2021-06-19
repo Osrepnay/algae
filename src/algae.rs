@@ -47,9 +47,9 @@ pub fn best_move(game: &mut Game, depth: u8, search_time: i128) -> Option<(u8, f
         thread::spawn(move || {
             // maybe switch to futures if it's not much slower
             let _ = tx.send(
-                min(
+                min_rec(
                     &mut game,
-                    direction,
+                    &mut vec![direction],
                     best_move.1,
                     f64::INFINITY,
                     depth,
@@ -116,9 +116,9 @@ pub fn max(
         {
             continue;
         }
-        let score = min(
+        let score = min_rec(
             game,
-            direction,
+            &mut vec![direction],
             alpha,
             beta,
             depth,
@@ -132,84 +132,6 @@ pub fn max(
         }
     }
     Some(alpha)
-}
-
-pub fn min(
-    game: &mut Game,
-    own_snake_move: u8,
-    alpha: f64,
-    mut beta: f64,
-    depth: u8,
-    search_time: i128,
-) -> Option<f64> {
-    let start = Instant::now();
-    if search_time < 0 {
-        return None;
-    }
-    if !game.snakes[1..].iter().any(|snake| snake.health > 0) {
-        return Some(10000.0);
-    }
-    if depth <= 0 {
-        return Some(eval(game));
-    }
-    if game.snakes[1].health <= 0 {
-        let score = min_rec(
-            game,
-            &mut vec![own_snake_move, 0],
-            alpha,
-            beta,
-            depth,
-            search_time - start.elapsed().as_millis() as i128,
-        )?;
-        if score <= alpha {
-            return Some(alpha);
-        }
-        if score < beta {
-            beta = score;
-        }
-        return Some(beta);
-    }
-    for direction in 0..4 {
-        if game.snakes[1].positions.len() == 1 && direction == 2 {
-            continue;
-        }
-        let new_head_signed = match direction {
-            0 => game.snakes[1].positions[0] as i16 + game.width as i16,
-            1 => game.snakes[1].positions[0] as i16 + 1,
-            2 => game.snakes[1].positions[0] as i16 - game.width as i16,
-            3 => game.snakes[1].positions[0] as i16 - 1,
-            _ => panic!("Invalid direction"),
-        };
-        if new_head_signed < 0
-            || new_head_signed >= game.width as i16 * game.height as i16
-            || (new_head_signed % game.width as i16 == 0 && direction == 1)
-            || ((new_head_signed + 1) % game.width as i16 == 0 && direction == 3)
-        {
-            continue;
-        }
-        if game.snakes[1].positions.len() > 1
-            && (new_head_signed
-                != game.snakes[1].positions[game.snakes[1].positions.len() - 1] as i16
-                && game.snakes[1].snake_arr[new_head_signed as usize])
-        {
-            continue;
-        }
-        let score = min_rec(
-            game,
-            &mut vec![own_snake_move, direction],
-            alpha,
-            beta,
-            depth,
-            search_time - start.elapsed().as_millis() as i128,
-        )?;
-        if score <= alpha {
-            return Some(alpha);
-        }
-        if score < beta {
-            beta = score;
-        }
-    }
-    Some(beta)
 }
 
 fn min_rec(
