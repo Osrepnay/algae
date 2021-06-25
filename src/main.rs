@@ -80,27 +80,26 @@ async fn main() {
                 }
                 game.add_snake(positions, snake_arr, snake.health, queued);
             }
-            println!("game: {:?}", game);
 
             let mut depth = 1;
-            let mut best_move = 0;
+            let mut best_move = (0, 0.0);
             // subtract ms to avoid accidentally taking slightly too long
-            while start.elapsed().as_millis() < sent_move.game.timeout - 375 {
+            while depth <= 6 {
                 let best_move_temp = algae::best_move(
                     &mut game,
                     depth,
                     (sent_move.game.timeout - start.elapsed().as_millis() - 375) as i128,
                 );
                 match best_move_temp {
-                    Some(best_move_temp) => best_move = best_move_temp.0,
+                    Some(best_move_temp) => best_move = best_move_temp,
                     None => break,
                 }
                 depth += 1;
             }
-            println!("depth: {}, move: {}", depth, best_move);
+            println!("{:?}", (best_move.0, best_move.1, depth));
             let move_int_to_str = ["up", "right", "down", "left"];
             Ok(warp::reply::json(&json!({
-                "move": move_int_to_str[best_move as usize],
+                "move": move_int_to_str[best_move.0 as usize],
                 "shout": "*aggressively yells*"
             }))) as Result<_, Rejection>
         });
