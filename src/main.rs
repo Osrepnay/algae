@@ -84,7 +84,7 @@ async fn main() {
             let mut depth = 1;
             let mut best_move = (0, 0.0);
             // subtract ms to avoid accidentally taking slightly too long
-            while depth <= 6 {
+            while start.elapsed().as_millis() < sent_move.game.timeout - 375 {
                 let best_move_temp = algae::best_move(
                     &mut game,
                     depth,
