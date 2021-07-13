@@ -65,27 +65,21 @@ impl Game {
             };
 
             // move snake
-            snake.positions.insert(0, new_head);
-            if snake.queued == 0 {
-                let last = snake.positions.pop().unwrap();
-                if snake.positions[1..].iter().any(|pos| *pos == new_head) {
-                    snake.positions.push(last);
-                    snake.positions.remove(0);
-                    hit_inaccessible[snake_idx] = true;
-                    snake.health = 0;
-                    continue;
-                }
-                snake.snake_arr[last as usize] = false;
+            let end_subtract = if snake.queued == 0 { 1 } else { 0 };
+            if snake.positions[..snake.positions.len() - end_subtract].iter().any(|pos| *pos == new_head) {
+                hit_inaccessible[snake_idx] = true;
+                snake.health = 0;
+                continue;
             } else {
-                if snake.positions[1..].iter().any(|pos| *pos == new_head) {
-                    snake.positions.remove(0);
-                    hit_inaccessible[snake_idx] = true;
-                    snake.health = 0;
-                    continue;
+                if snake.queued == 0 {
+                    let last = snake.positions.pop().unwrap();
+                    snake.snake_arr[last as usize] = false;
+                } else {
+                    snake.queued -= 1;
                 }
-                snake.queued -= 1;
+                snake.positions.insert(0, new_head);
+                snake.snake_arr[new_head as usize] = true;
             }
-            snake.snake_arr[new_head as usize] = true;
             snake.health -= 1;
 
             // eat apple if available

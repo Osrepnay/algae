@@ -1,10 +1,10 @@
 pub mod algae;
 pub mod game;
+pub mod perft;
 
 use game::Game;
 use serde::Deserialize;
 use serde_json::json;
-use std::time::Instant;
 use warp::http::StatusCode;
 use warp::Filter;
 use warp::Rejection;
@@ -30,7 +30,6 @@ async fn main() {
         .and(warp::post())
         .and(warp::body::json())
         .and_then(|sent_move: Move| async move {
-            let start = Instant::now();
             println!("request: {:?}", sent_move);
             let mut game = Game::new(sent_move.board.width, sent_move.board.height);
             for apple in sent_move.board.food {
@@ -80,26 +79,9 @@ async fn main() {
                 }
                 game.add_snake(positions, snake_arr, snake.health, queued);
             }
-
-            let mut depth = 1;
-            let mut best_move = (0, 0.0);
-            // subtract ms to avoid accidentally taking slightly too long
-            while start.elapsed().as_millis() < sent_move.game.timeout - 375 {
-                let best_move_temp = algae::best_move(
-                    &mut game,
-                    depth,
-                    (sent_move.game.timeout - start.elapsed().as_millis() - 375) as i128,
-                );
-                match best_move_temp {
-                    Some(best_move_temp) => best_move = best_move_temp,
-                    None => break,
-                }
-                depth += 1;
-            }
-            println!("{:?}", (best_move.0, best_move.1, depth));
-            let move_int_to_str = ["up", "right", "down", "left"];
+            let num_moves = perft::perft(&mut game, 7);
             Ok(warp::reply::json(&json!({
-                "move": move_int_to_str[best_move.0 as usize],
+                "numMoves": num_moves,
                 "shout": "*aggressively yells*"
             }))) as Result<_, Rejection>
         });
